@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using vehicles_api.Data;
+using vehicles_api.Entities;
 
 namespace vehicles_api.Controllers;
 
@@ -30,7 +31,7 @@ public class VehiclesController : ControllerBase
         vehicle.Id,
         regNo = vehicle.RegistrationNumber,
         manufacturer = vehicle.Manufacturer.Name,
-        modelType = vehicle.Model,
+        vehicle.Model,
         vehicleType = vehicle.Manufacturer.Name + " " + vehicle.Model,
         vehicle.ModelYear,
         vehicle.Mileage,
@@ -52,7 +53,7 @@ public class VehiclesController : ControllerBase
         vehicle.Id,
         regNo = vehicle.RegistrationNumber,
         manufacturer = vehicle.Manufacturer.Name,
-        modelType = vehicle.Model,
+        vehicle.Model,
         vehicle.ModelYear,
         vehicle.Mileage,
         vehicle.ImageUrl,
@@ -61,18 +62,19 @@ public class VehiclesController : ControllerBase
     .SingleOrDefaultAsync();
     return Ok(new { success = true, data = vehicle });
   }
+
   [HttpGet("regno/{regNo}")]
   public async Task<ActionResult> FindByRegNu(string regNo)
   {
     var vehicle = await _context.Vehicles
-      .Where(v => v.RegistrationNumber == regNo)
+      .Where(v => v.RegistrationNumber.ToLower() == regNo.ToLower())
       .Include(m => m.Manufacturer)
       .Select(vehicle => new
       {
         vehicle.Id,
         regNo = vehicle.RegistrationNumber,
         manufacturer = vehicle.Manufacturer.Name,
-        modelType = vehicle.Model,
+        vehicle.Model,
         vehicle.ModelYear,
         vehicle.Mileage,
         vehicle.ImageUrl,
@@ -80,5 +82,65 @@ public class VehiclesController : ControllerBase
       })
     .SingleOrDefaultAsync();
     return Ok(new { success = true, data = vehicle });
+  }
+
+  [HttpPost()]
+  public async Task<ActionResult> Add(Vehicle vehicle)
+  {
+    // TODO: prevent the repetative regNu to be added to the database
+    var manufacturer = await _context.Manufacturers.FindAsync(vehicle.ManufacturerId);
+    vehicle.Manufacturer = manufacturer;
+    _context.Vehicles.Add(vehicle);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(FindById), new { id = vehicle.Id }, new
+    {
+      vehicle.Id,
+      regNo = vehicle.RegistrationNumber,
+      manufacturer = vehicle.Manufacturer.Name,
+      vehicle.Model,
+      vehicle.ModelYear,
+      vehicle.Mileage,
+      vehicle.ImageUrl,
+      vehicle.Value
+    });
+  }
+
+  [HttpPut("{id}")]
+  public async Task<ActionResult> Update(int id, Vehicle vehicle)
+  {
+    var toUpdate = await _context.Vehicles.FindAsync(id);
+    toUpdate.RegistrationNumber = vehicle.RegistrationNumber;
+    toUpdate.Model = vehicle.Model;
+    toUpdate.ImageUrl = vehicle.ImageUrl;
+    toUpdate.Mileage = vehicle.Mileage;
+    toUpdate.ModelYear = vehicle.ModelYear;
+    toUpdate.Value = vehicle.Value;
+    toUpdate.Description = vehicle.Description;
+
+    await _context.SaveChangesAsync();
+    return NoContent();
+  }
+
+  [HttpPatch("{id}")]
+  public async Task<ActionResult> Patch(int id, Vehicle vehicle)
+  {
+    var toUpdate = await _context.Vehicles.FindAsync(id);
+    toUpdate.RegistrationNumber = vehicle.RegistrationNumber;
+    toUpdate.Mileage = vehicle.Mileage;
+    toUpdate.ModelYear = vehicle.ModelYear;
+    await _context.SaveChangesAsync();
+    
+    return NoContent();
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<ActionResult> Delete(int id)
+  {
+    var toDelete = await _context.Vehicles.FindAsync(id);
+    _context.Vehicles.Remove(toDelete);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
   }
 }

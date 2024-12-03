@@ -10,6 +10,7 @@ public class Vehicle
   public int Mileage { get; set; }
   public int Value { get; set; }
   public string Description { get; set; }
+  public int ManufacturerId { get; set; }
   // Navigeringsegenskap som låter oss hämta information om aktuell tillverkare...
   public Manufacturer Manufacturer { get; set; }
 }
