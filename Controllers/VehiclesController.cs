@@ -40,4 +40,45 @@ public class VehiclesController : ControllerBase
       .ToListAsync(); // Skickar frågan till databasen...
     return Ok(new { success = true, data = vehicles });
   }
+
+  [HttpGet("{id}")]
+  public async Task<ActionResult> FindById(int id)
+  {
+    var vehicle = await _context.Vehicles
+      .Where(v => v.Id == id)
+      .Include(m => m.Manufacturer)
+      .Select(vehicle => new
+      {
+        vehicle.Id,
+        regNo = vehicle.RegistrationNumber,
+        manufacturer = vehicle.Manufacturer.Name,
+        modelType = vehicle.Model,
+        vehicle.ModelYear,
+        vehicle.Mileage,
+        vehicle.ImageUrl,
+        vehicle.Value
+      })
+    .SingleOrDefaultAsync();
+    return Ok(new { success = true, data = vehicle });
+  }
+  [HttpGet("regno/{regNo}")]
+  public async Task<ActionResult> FindByRegNu(string regNo)
+  {
+    var vehicle = await _context.Vehicles
+      .Where(v => v.RegistrationNumber == regNo)
+      .Include(m => m.Manufacturer)
+      .Select(vehicle => new
+      {
+        vehicle.Id,
+        regNo = vehicle.RegistrationNumber,
+        manufacturer = vehicle.Manufacturer.Name,
+        modelType = vehicle.Model,
+        vehicle.ModelYear,
+        vehicle.Mileage,
+        vehicle.ImageUrl,
+        vehicle.Value
+      })
+    .SingleOrDefaultAsync();
+    return Ok(new { success = true, data = vehicle });
+  }
 }
