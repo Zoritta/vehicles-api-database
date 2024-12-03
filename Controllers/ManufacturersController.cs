@@ -29,6 +29,7 @@ public class ManufacturersController : ControllerBase
         x.Name
       })
       .ToListAsync();
+      
     return Ok(new { success = true, data = manufacturers });
   }
 
@@ -46,7 +47,6 @@ public class ManufacturersController : ControllerBase
       })
     .SingleOrDefaultAsync();
 
-
     return Ok(new { success = true, data = manufacturer });
   }
 
@@ -56,6 +56,7 @@ public class ManufacturersController : ControllerBase
     var manufacturers = await _context.Manufacturers
       .Include(m => m.Vehicles)
       .ToListAsync();
+
     return Ok(new { success = true, data = manufacturers });
   }
 
@@ -65,7 +66,25 @@ public class ManufacturersController : ControllerBase
     _context.Manufacturers.Add(manufacturer);
     await _context.SaveChangesAsync();
 
-    // Returnerar en statuskod 201
     return CreatedAtAction(nameof(FindManufacturer), new { id = manufacturer.Id }, manufacturer);
+  }
+  [HttpPut("{id}")]
+  public async Task<ActionResult> Update(int id, Manufacturer manufacturer)
+  {
+    var toUpdate = await _context.Manufacturers.FindAsync(id);
+    toUpdate.Name = manufacturer.Name;
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+  }
+
+  [HttpDelete("{id}")]
+  public async Task<ActionResult> Delete(int id, Manufacturer manufacturer)
+  {
+    var toDelete = await _context.Manufacturers.FindAsync(id);
+    _context.Manufacturers.Remove(toDelete);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
   }
 }
